@@ -7,7 +7,7 @@ public class ClosestPair2D {
 
     public static record Point(double x, double y) {}
 
-    /** Внешний вызов: O(n log n), пресортируем по x и по y один раз */
+
     public static double closest(Point[] pts, Metrics m) {
         Point[] px = pts.clone();
         Arrays.sort(px, Comparator.comparingDouble(Point::x));
@@ -16,12 +16,7 @@ public class ClosestPair2D {
         return rec(px, py, m);
     }
 
-    /**
-     * Рекурсивный шаг по массивам:
-     * px — отсортирован по x
-     * py — те же точки, но отсортированные по y
-     * Оба массива "плотные", без null.
-     */
+
     private static double rec(Point[] px, Point[] py, Metrics m) {
         int n = px.length;
         if (n <= 3) {
@@ -39,11 +34,11 @@ public class ClosestPair2D {
         int mid = n / 2;
         double midx = px[mid].x();
 
-        // Разделяем по X
+
         Point[] pxL = Arrays.copyOfRange(px, 0, mid);
         Point[] pxR = Arrays.copyOfRange(px, mid, n);
 
-        // Разделяем py на pyl/pyr, сохраняя порядок по y (строго без null)
+
         List<Point> pylList = new ArrayList<>(mid);
         List<Point> pyrList = new ArrayList<>(n - mid);
         for (Point p : py) {
@@ -57,14 +52,14 @@ public class ClosestPair2D {
         double dr = rec(pxR, pyr, m);
         double d = Math.min(dl, dr);
 
-        // Стрип: точки в полосе |x - midx| < d, уже упорядочены по y (мы фильтруем из py)
+
         List<Point> strip = new ArrayList<>();
         for (Point p : py) if (Math.abs(p.x() - midx) < d) strip.add(p);
 
-        // Проверяем не более 7 соседей
+
         int s = strip.size();
         for (int i = 0; i < s; i++) {
-            // до 7 точек после i
+
             int limit = Math.min(i + 7, s - 1);
             for (int j = i + 1; j <= limit; j++) {
                 m.comparisons++;

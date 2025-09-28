@@ -10,46 +10,57 @@ public class ClosestPair2D {
     public static double closest(Point[] pts, Metrics m) {
         Point[] px = pts.clone();
         Arrays.sort(px, Comparator.comparingDouble(Point::x));
-        Point[] py = px.clone();
-        return rec(px, py, 0, px.length, m);
+        Point[] py = pts.clone();
+        Arrays.sort(py, Comparator.comparingDouble(Point::y));
+        return rec(px, py, m);
     }
 
-    private static double rec(Point[] px, Point[] py, int lo, int hi, Metrics m) {
-        int n = hi - lo;
+    private static double rec(Point[] px, Point[] py, Metrics m) {
+        int n = px.length;
         if (n <= 3) {
             double d = Double.POSITIVE_INFINITY;
-            for (int i = lo; i < hi; i++)
-                for (int j = i + 1; j < hi; j++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = i + 1; j < n; j++) {
                     m.comparisons++;
                     d = Math.min(d, dist(px[i], px[j]));
                 }
-            Arrays.sort(px, lo, hi, Comparator.comparingDouble(Point::y));
+            }
             return d;
         }
+
         m.incDepth();
-        int mid = lo + n/2;
+        int mid = n / 2;
         double midx = px[mid].x();
-        // split py by midx while preserving y-order
-        Point[] leftY = new Point[n];
-        Point[] rightY = new Point[n];
-        int li=0, ri=0;
-        for (int i=0; i<py.length; i++) {
-            if (py[i].x() < midx || (py[i].x()==midx && py[i].y() <= px[mid].y())) leftY[li++] = py[i];
-            else rightY[ri++] = py[i];
+
+
+        Point[] pxL = Arrays.copyOfRange(px, 0, mid);
+        Point[] pxR = Arrays.copyOfRange(px, mid, n);
+
+
+        List<Point> pylList = new ArrayList<>(mid);
+        List<Point> pyrList = new ArrayList<>(n - mid);
+        for (Point p : py) {
+            if (p.x() < midx || (p.x() == midx && p.y() <= px[mid].y())) pylList.add(p);
+            else pyrList.add(p);
         }
-        double dl = rec(px, leftY, lo, mid, m);
-        double dr = rec(px, rightY, mid, hi, m);
+        Point[] pyl = pylList.toArray(new Point[0]);
+        Point[] pyr = pyrList.toArray(new Point[0]);
+
+        double dl = rec(pxL, pyl, m);
+        double dr = rec(pxR, pyr, m);
         double d = Math.min(dl, dr);
-        // build strip
-        Point[] strip = new Point[n];
-        int s = 0;
-        for (int i=0;i<li;i++) if (Math.abs(leftY[i].x()-midx) < d) strip[s++] = leftY[i];
-        for (int i=0;i<ri;i++) if (Math.abs(rightY[i].x()-midx) < d) strip[s++] = rightY[i];
-        // check up to next 7 points
-        for (int i=0; i<s; i++) {
-            for (int j=i+1; j<Math.min(i+8, s); j++) {
+
+
+        List<Point> strip = new ArrayList<>();
+        for (Point p : py) if (Math.abs(p.x() - midx) < d) strip.add(p);
+
+        int s = strip.size();
+        for (int i = 0; i < s; i++) {
+
+            int limit = Math.min(i + 7, s - 1);
+            for (int j = i + 1; j <= limit; j++) {
                 m.comparisons++;
-                double dij = dist(strip[i], strip[j]);
+                double dij = dist(strip.get(i), strip.get(j));
                 if (dij < d) d = dij;
             }
         }
@@ -58,7 +69,7 @@ public class ClosestPair2D {
     }
 
     private static double dist(Point a, Point b) {
-        double dx = a.x()-b.x(), dy = a.y()-b.y();
+        double dx = a.x() - b.x(), dy = a.y() - b.y();
         return Math.hypot(dx, dy);
     }
 }
